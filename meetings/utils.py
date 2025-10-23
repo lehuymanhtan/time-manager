@@ -191,7 +191,50 @@ def get_heatmap_data(meeting_request, participant_timezone='Asia/Ho_Chi_Minh'):
     # Get all suggested slots
     slots = SuggestedSlot.objects.filter(meeting_request=meeting_request)
     
-    # Organize data by date and time
+    # If no suggested slots exist, generate time slots from meeting request configuration
+    if not slots.exists():
+        # Generate all possible time slots
+        possible_slots = generate_time_slots(meeting_request)
+        
+        # Organize data by date and time
+        heatmap = {}
+        dates_set = set()
+        times_set = set()
+        
+        for start_time_utc, end_time_utc in possible_slots:
+            # Convert to participant's timezone
+            local_start = start_time_utc.astimezone(tz)
+            
+            date_str = local_start.strftime('%Y-%m-%d')
+            time_str = local_start.strftime('%H:%M')
+            
+            dates_set.add(date_str)
+            times_set.add(time_str)
+            
+            if date_str not in heatmap:
+                heatmap[date_str] = {}
+            
+            heatmap[date_str][time_str] = {
+                'level': 0,
+                'available': 0,
+                'total': 0,
+                'percentage': 0,
+                'start_utc': start_time_utc.isoformat(),
+                'end_utc': end_time_utc.isoformat(),
+            }
+        
+        # Sort dates and times
+        dates = sorted(list(dates_set))
+        times = sorted(list(times_set))
+        
+        return {
+            'dates': dates,
+            'time_slots': times,
+            'heatmap': heatmap,
+            'timezone': participant_timezone,
+        }
+    
+    # Organize data by date and time from suggested slots
     heatmap = {}
     dates_set = set()
     times_set = set()

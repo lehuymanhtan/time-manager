@@ -126,6 +126,26 @@ class ParticipantForm(forms.ModelForm):
             }),
             'timezone': forms.Select(attrs={'class': 'form-select'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Populate timezone choices
+        common_timezones = [
+            'Asia/Ho_Chi_Minh',
+            'UTC',
+            'Asia/Singapore',
+            'Asia/Bangkok',
+            'Asia/Tokyo',
+            'Asia/Seoul',
+            'Europe/London',
+            'Europe/Paris',
+            'America/New_York',
+            'America/Los_Angeles',
+        ]
+        self.fields['timezone'].widget = forms.Select(
+            choices=[(tz, tz) for tz in common_timezones],
+            attrs={'class': 'form-select'}
+        )
 
 
 class BulkParticipantForm(forms.Form):

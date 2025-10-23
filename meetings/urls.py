@@ -18,6 +18,7 @@ urlpatterns = [
     # Leader Workflow - View & Manage
     path('request/<uuid:request_id>/', views.view_request, name='view_request'),
     path('request/<uuid:request_id>/lock/<uuid:slot_id>/', views.lock_slot, name='lock_slot'),
+    path('request/<uuid:request_id>/delete/', views.delete_request, name='delete_request'),
     
     # Member Workflow - Respond
     path('r/<uuid:request_id>/', views.respond_to_request, name='respond_to_request'),

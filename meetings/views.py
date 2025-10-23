@@ -247,6 +247,22 @@ def lock_slot(request, request_id, slot_id):
     return redirect('view_request', request_id=request_id)
 
 
+def delete_request(request, request_id):
+    """Delete a meeting request"""
+    meeting_request = get_object_or_404(MeetingRequest, id=request_id)
+    
+    if request.method == 'POST':
+        title = meeting_request.title
+        meeting_request.delete()
+        messages.success(request, f'Đã xóa yêu cầu "{title}" thành công!')
+        return redirect('dashboard')
+    
+    # If GET request, show confirmation page
+    return render(request, 'meetings/confirm_delete.html', {
+        'meeting_request': meeting_request
+    })
+
+
 # =============================================================================
 # MEMBER WORKFLOW - RESPOND TO REQUEST
 # =============================================================================
@@ -268,8 +284,8 @@ def respond_to_request(request, request_id):
             'meeting_request': meeting_request
         })
     
-    # Get or create participant from session
-    participant_id = request.session.get(f'participant_{request_id}')
+    # Get or create participant from URL parameter first, then from session
+    participant_id = request.GET.get('p') or request.session.get(f'participant_{request_id}')
     if participant_id:
         participant = Participant.objects.filter(id=participant_id).first()
     else:
@@ -309,6 +325,10 @@ def respond_to_request(request, request_id):
                         timezone=timezone_val
                     )
                 
+                # Use unique session key including participant ID to avoid conflicts
+                session_key = f'participant_{request_id}_{participant.id}'
+                request.session[session_key] = str(participant.id)
+                # Also store the latest participant ID for this request
                 request.session[f'participant_{request_id}'] = str(participant.id)
             else:
                 # Update participant info
@@ -317,8 +337,8 @@ def respond_to_request(request, request_id):
                 participant.timezone = form.cleaned_data['timezone']
                 participant.save()
             
-            # Redirect to calendar selection
-            return redirect('select_busy_times', request_id=request_id)
+            # Redirect to calendar selection with token and participant ID
+            return redirect(f'/r/{request_id}/select/?t={token}&p={participant.id}')
     else:
         initial = {}
         if participant:
@@ -340,14 +360,19 @@ def select_busy_times(request, request_id):
     """Member selects their busy time slots"""
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)
     
-    # Get participant from session
-    participant_id = request.session.get(f'participant_{request_id}')
+    # Get participant ID from URL parameter first (more reliable), then from session
+    participant_id = request.GET.get('p') or request.session.get(f'participant_{request_id}')
     if not participant_id:
-        return redirect('respond_to_request', request_id=request_id)
+        # Redirect back to respond page with token
+        token = request.GET.get('t', meeting_request.token)
+        return redirect(f'/r/{request_id}/?t={token}')
     
     participant = get_object_or_404(Participant, id=participant_id)
     
-    # Get existing busy slots
+    # Store in session for future use
+    request.session[f'participant_{request_id}'] = str(participant.id)
+    
+    # Get existing busy slots for THIS participant only
     busy_slots = participant.busy_slots.all()
     
     # Get heatmap data in participant's timezone
@@ -358,6 +383,7 @@ def select_busy_times(request, request_id):
         'participant': participant,
         'busy_slots': busy_slots,
         'heatmap_data': heatmap_data,
+        'token': request.GET.get('t', meeting_request.token),
     })
 
 
