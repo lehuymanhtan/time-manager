@@ -57,29 +57,31 @@
                                         </small>
                                     </td>
                                     <td>
-                                        {% if request.status == 'active' %}
+                                        {% if request.is_active %}
                                             <span class="badge bg-success">Đang hoạt động</span>
                                         {% elif request.status == 'locked' %}
                                             <span class="badge bg-primary">Đã chốt</span>
                                         {% elif request.status == 'cancelled' %}
                                             <span class="badge bg-danger">Đã hủy</span>
+                                        {% elif request.status == 'draft' %}
+                                            <span class="badge bg-secondary">Nháp</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{{ request.get_status_display }}</span>
+                                            <span class="badge bg-warning">Đã đóng</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         <div class="progress" style="height: 25px;">
-                                            <div class="progress-bar {% if request.response_rate >= 80 %}bg-success{% elif request.response_rate >= 50 %}bg-primary{% else %}bg-warning{% endif %}" 
+                                            <div class="progress-bar {% if request.response_rate_int >= 80 %}bg-success{% elif request.response_rate_int >= 50 %}bg-primary{% else %}bg-warning{% endif %}" 
                                                  role="progressbar" 
-                                                 style="width: {{ request.response_rate }}%"
-                                                 aria-valuenow="{{ request.response_rate }}" 
+                                                 style="width: {{ request.response_rate_int }}%"
+                                                 aria-valuenow="{{ request.response_rate_int }}" 
                                                  aria-valuemin="0" 
                                                  aria-valuemax="100">
                                                 {{ request.response_rate }}%
                                             </div>
                                         </div>
                                         <small class="text-muted">
-                                            {{ request.participants.filter(has_responded=True).count }} / {{ request.participants.count }} người
+                                            {{ request.responded_count }} / {{ request.total_count }} người
                                         </small>
                                     </td>
                                     <td>
@@ -94,7 +96,7 @@
                                             </a>
                                             <button type="button" 
                                                     class="btn btn-outline-secondary copy-link-btn"
-                                                    data-link="{{ request.scheme }}://{{ request.get_absolute_url }}"
+                                                    data-link="{{ request.share_link }}"
                                                     title="Sao chép link">
                                                 <i class="bi bi-link-45deg"></i>
                                             </button>

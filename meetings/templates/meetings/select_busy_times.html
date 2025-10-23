@@ -200,13 +200,12 @@ $('.time-cell').click(function() {
 
 function markBusySlotsOnCalendar() {
     // Mark cells based on busySlots array
+    // Note: busySlots have datetime strings in format "2025-10-23T09:00"
     busySlots.forEach(slot => {
-        const start = new Date(slot.start);
-        const end = new Date(slot.end);
-        
         $('.time-cell').each(function() {
-            const cellDateTime = new Date($(this).data('datetime'));
-            if (cellDateTime >= start && cellDateTime < end) {
+            const cellDateTime = $(this).data('datetime');
+            // Compare strings directly since they're in the same format and timezone
+            if (cellDateTime >= slot.start && cellDateTime < slot.end) {
                 $(this).addClass('busy');
             }
         });
@@ -261,20 +260,41 @@ function updateBusySlotsList() {
 }
 
 function addMinutes(datetime, minutes) {
-    const date = new Date(datetime);
+    // datetime is in format "2025-10-23T09:00"
+    // Parse and add minutes, keeping the same format
+    const parts = datetime.split('T');
+    const datePart = parts[0]; // "2025-10-23"
+    const timePart = parts[1]; // "09:00"
+    
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    
+    // Create a date object (it will be in local browser time, but that's ok for calculations)
+    const date = new Date(year, month - 1, day, hour, minute);
     date.setMinutes(date.getMinutes() + minutes);
-    return date.toISOString().slice(0, 16);
+    
+    // Format back to string
+    const newYear = date.getFullYear();
+    const newMonth = String(date.getMonth() + 1).padStart(2, '0');
+    const newDay = String(date.getDate()).padStart(2, '0');
+    const newHour = String(date.getHours()).padStart(2, '0');
+    const newMinute = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${newYear}-${newMonth}-${newDay}T${newHour}:${newMinute}`;
 }
 
 function formatDateTime(datetime) {
-    const date = new Date(datetime);
-    return date.toLocaleString('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    // datetime is in format "2025-10-23T09:00"
+    // Parse it as a simple string since it's already in the participant's timezone
+    const parts = datetime.split('T');
+    const datePart = parts[0]; // "2025-10-23"
+    const timePart = parts[1]; // "09:00"
+    
+    const [year, month, day] = datePart.split('-');
+    const [hour, minute] = timePart.split(':');
+    
+    // Format as DD/MM/YYYY HH:MM
+    return `${day}/${month}/${year} ${hour}:${minute}`;
 }
 
 // Save button

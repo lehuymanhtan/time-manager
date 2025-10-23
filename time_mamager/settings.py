@@ -25,8 +25,16 @@ SECRET_KEY = 'django-insecure-t#tbi7guvf=^8md-pteg@pzr4ilss)qima99(&yp)(3tcu*g!+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'time-manager-dev.tanmanh350.ovh'
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:7799", 
+    "https://time-manager-dev.tanmanh350.ovh"
+]
 
 # Application definition
 
@@ -76,9 +84,9 @@ WSGI_APPLICATION = 'time_mamager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'time_manager_db',
-        'USER': 'root',
-        'PASSWORD': 'root',  # Change this to your MySQL password
+        'NAME': 'sql_time_manager',
+        'USER': 'sql_time_manager',
+        'PASSWORD': '634296e9769698',  # Change this to your MySQL password
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {

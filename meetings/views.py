@@ -37,6 +37,14 @@ def dashboard(request):
     # In production, filter by user authentication
     recent_requests = MeetingRequest.objects.all()[:20]
     
+    # Add response counts and share URL to each request for template
+    for req in recent_requests:
+        req.responded_count = req.participants.filter(has_responded=True).count()
+        req.total_count = req.participants.count()
+        req.share_link = request.build_absolute_uri(req.get_share_url())
+        # Convert response_rate to integer for CSS width (avoid decimal separator issues)
+        req.response_rate_int = int(req.response_rate)
+    
     return render(request, 'meetings/dashboard.html', {
         'requests': recent_requests
     })
@@ -110,11 +118,22 @@ def create_request_step2(request):
                     else:
                         continue
                     
-                    Participant.objects.get_or_create(
-                        meeting_request=meeting_request,
-                        email=email,
-                        defaults={'name': name}
-                    )
+                    # Convert empty email to None for NULL in database
+                    email = email or None
+                    
+                    if email:
+                        Participant.objects.get_or_create(
+                            meeting_request=meeting_request,
+                            email=email,
+                            defaults={'name': name}
+                        )
+                    else:
+                        # No email - create new participant with NULL email
+                        Participant.objects.create(
+                            meeting_request=meeting_request,
+                            name=name or 'Anonymous',
+                            email=None
+                        )
                     count += 1
                 
                 messages.success(request, f'Đã thêm {count} người tham gia')
@@ -261,17 +280,40 @@ def respond_to_request(request, request_id):
         if form.is_valid():
             # Get or create participant
             if not participant:
-                participant = Participant.objects.create(
-                    meeting_request=meeting_request,
-                    name=form.cleaned_data['name'],
-                    email=form.cleaned_data['email'],
-                    timezone=form.cleaned_data['timezone']
-                )
+                email = form.cleaned_data['email'] or None  # Convert empty string to None
+                name = form.cleaned_data['name']
+                timezone_val = form.cleaned_data['timezone']
+                
+                # If email is provided, use get_or_create with email as lookup key
+                if email:
+                    participant, created = Participant.objects.get_or_create(
+                        meeting_request=meeting_request,
+                        email=email,
+                        defaults={
+                            'name': name,
+                            'timezone': timezone_val
+                        }
+                    )
+                    if not created:
+                        # Update existing participant info
+                        participant.name = name
+                        participant.timezone = timezone_val
+                        participant.save()
+                else:
+                    # No email provided - create new participant with NULL email
+                    # NULL emails don't violate unique constraint (multiple NULLs are allowed)
+                    participant = Participant.objects.create(
+                        meeting_request=meeting_request,
+                        name=name or 'Anonymous',
+                        email=None,
+                        timezone=timezone_val
+                    )
+                
                 request.session[f'participant_{request_id}'] = str(participant.id)
             else:
                 # Update participant info
                 participant.name = form.cleaned_data['name']
-                participant.email = form.cleaned_data['email']
+                participant.email = form.cleaned_data['email'] or None
                 participant.timezone = form.cleaned_data['timezone']
                 participant.save()
             
@@ -386,11 +428,17 @@ def response_complete(request, request_id):
     # Get top suggestions
     top_suggestions = get_top_suggestions(meeting_request, limit=5)
     
+    # Calculate response stats for template
+    responded_count = meeting_request.participants.filter(has_responded=True).count()
+    total_count = meeting_request.participants.count()
+    
     return render(request, 'meetings/response_complete.html', {
         'meeting_request': meeting_request,
         'participant': participant,
         'heatmap_data': heatmap_data,
         'top_suggestions': top_suggestions,
+        'responded_count': responded_count,
+        'total_count': total_count,
     })
 
 

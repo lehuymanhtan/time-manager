@@ -143,7 +143,7 @@ class Participant(models.Model):
     
     # Participant Info
     name = models.CharField(max_length=255, blank=True, verbose_name='Tên')
-    email = models.EmailField(blank=True, verbose_name='Email')
+    email = models.EmailField(blank=True, null=True, verbose_name='Email')
     timezone = models.CharField(
         max_length=50,
         default='Asia/Ho_Chi_Minh',
