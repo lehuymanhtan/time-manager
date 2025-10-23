@@ -405,8 +405,12 @@ def save_busy_slots(request, request_id):
         })
     
     except Exception as e:
+        # Log the error for debugging but don't expose details to user
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error saving busy times: {str(e)}")
         return JsonResponse({
-            'error': str(e)
+            'error': 'Đã xảy ra lỗi khi lưu dữ liệu. Vui lòng thử lại.'
         }, status=400)
 
 
