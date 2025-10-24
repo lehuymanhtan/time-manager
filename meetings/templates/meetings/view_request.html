@@ -1,4 +1,5 @@
 {% extends 'meetings/base.html' %}
+{% load meeting_filters %}
 
 {% block title %}{{ meeting_request.title }} - Chi tiết{% endblock %}
 
@@ -176,6 +177,113 @@
         </div>
     </div>
 
+    <!-- Heatmap -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">
+                <button class="btn btn-link text-white text-decoration-none w-100 text-start collapsed" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#heatmapCollapse" 
+                        aria-expanded="false" 
+                        aria-controls="heatmapCollapse">
+                    <i class="bi bi-grid-3x3-gap"></i> Heatmap - Tình trạng rảnh
+                    <i class="bi bi-chevron-down float-end"></i>
+                </button>
+            </h5>
+        </div>
+        <div class="collapse" id="heatmapCollapse">
+            <div class="card-body">
+                {% if heatmap_data.heatmap %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm heatmap-table">
+                        <thead>
+                            <tr>
+                                <th class="sticky-col">Thời gian</th>
+                                {% for date_str in heatmap_data.dates %}
+                                <th class="text-center">
+                                    {{ date_str|format_date_header }}
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for time_slot in heatmap_data.time_slots %}
+                            <tr>
+                                <td class="sticky-col"><strong>{{ time_slot }}</strong></td>
+                                {% for date in heatmap_data.dates %}
+                                {% with cell=heatmap_data.heatmap|get_item:date|get_item:time_slot %}
+                                {% if cell %}
+                                {% if cell.total > 0 %}
+                                {% with score_pct=cell.percentage %}
+                                <td class="text-center p-2 {% if score_pct == 0 %}bg-white{% elif score_pct >= 90 %}bg-emerald-500{% elif score_pct >= 75 %}bg-emerald-400{% elif score_pct >= 50 %}bg-emerald-300{% elif score_pct >= 25 %}bg-emerald-200{% else %}bg-emerald-100{% endif %}"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="top"
+                                    title="{{ cell.available }} / {{ cell.total }} người rảnh ({{ score_pct }}%)">
+                                    <small class="fw-bold">{{ cell.available }}/{{ cell.total }}</small>
+                                </td>
+                                {% endwith %}
+                                {% else %}
+                                <td class="text-center bg-light p-2">
+                                    <small class="text-muted">-</small>
+                                </td>
+                                {% endif %}
+                                {% else %}
+                                <td class="text-center bg-light p-2">
+                                    <small class="text-muted">-</small>
+                                </td>
+                                {% endif %}
+                                {% endwith %}
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Legend -->
+                <div class="mt-3">
+                    <h6>Chú thích:</h6>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-white border"></div>
+                            <small class="ms-2">0%</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-emerald-100"></div>
+                            <small class="ms-2">1-25%</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-emerald-200"></div>
+                            <small class="ms-2">25-50%</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-emerald-300"></div>
+                            <small class="ms-2">50-75%</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-emerald-400"></div>
+                            <small class="ms-2">75-90%</small>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="heatmap-legend bg-emerald-500"></div>
+                            <small class="ms-2">90-100%</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mt-2 mb-0">
+                        <small><i class="bi bi-info-circle"></i> Múi giờ: {{ heatmap_data.timezone }}</small>
+                    </p>
+                </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i> 
+                    Chưa có dữ liệu để hiển thị heatmap.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     <!-- Participants Status -->
     <div class="row">
         <div class="col-md-6">
@@ -258,6 +366,12 @@
 // Auto-select link on click
 $('#share-link').click(function() {
     this.select();
+});
+
+// Initialize Bootstrap tooltips for heatmap
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
 });
 
 // Auto-refresh every 30 seconds
