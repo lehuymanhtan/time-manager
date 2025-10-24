@@ -381,6 +381,7 @@ def respond_to_request(request, request_id):
 
 def select_busy_times(request, request_id):
     """Member selects their busy time slots"""
+    import json
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)
     
     # Get participant ID from URL parameter first (more reliable), then from session
@@ -400,6 +401,9 @@ def select_busy_times(request, request_id):
     
     # Get heatmap data in participant's timezone
     heatmap_data = get_heatmap_data(meeting_request, participant.timezone)
+    
+    # Serialize heatmap for JavaScript
+    heatmap_data['heatmap_json'] = json.dumps(heatmap_data['heatmap'])
     
     return render(request, 'meetings/select_busy_times.html', {
         'meeting_request': meeting_request,
