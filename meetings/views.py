@@ -232,8 +232,8 @@ def lock_slot(request, request_id, slot_id):
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)
     slot = get_object_or_404(SuggestedSlot, id=slot_id, meeting_request=meeting_request)
     
-    # Unlock all other slots
-    SuggestedSlot.objects.filter(meeting_request=meeting_request).update(is_locked=False)
+    # Delete all other slots (keep only the locked slot)
+    SuggestedSlot.objects.filter(meeting_request=meeting_request).exclude(id=slot_id).delete()
     
     # Lock this slot
     slot.is_locked = True

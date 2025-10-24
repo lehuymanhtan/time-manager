@@ -123,7 +123,7 @@ class MeetingRequest(models.Model):
         if total == 0:
             return 0
         responded = self.participants.filter(has_responded=True).count()
-        return round((responded / total) * 100, 1)
+        return round((responded / total) * 100)
     
     def get_share_url(self):
         """Generate shareable URL for participants"""
