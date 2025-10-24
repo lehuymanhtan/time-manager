@@ -3,8 +3,9 @@ Forms for Meeting Time Scheduler
 """
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .models import MeetingRequest, Participant, BusySlot
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import pytz
 
 
@@ -92,6 +93,18 @@ class MeetingRequestForm(forms.ModelForm):
         end_date = cleaned_data.get('date_range_end')
         work_start = cleaned_data.get('work_hours_start')
         work_end = cleaned_data.get('work_hours_end')
+        response_deadline = cleaned_data.get('response_deadline')
+        
+        # Get today's date for comparison
+        today = timezone.now().date()
+        
+        # Check if start date is in the past
+        if start_date and start_date < today:
+            raise ValidationError('Ngày bắt đầu không được ở quá khứ')
+        
+        # Check if end date is in the past
+        if end_date and end_date < today:
+            raise ValidationError('Ngày kết thúc không được ở quá khứ')
         
         if start_date and end_date:
             if end_date <= start_date:
@@ -100,6 +113,11 @@ class MeetingRequestForm(forms.ModelForm):
             # Limit to reasonable range
             if (end_date - start_date).days > 90:
                 raise ValidationError('Phạm vi ngày không được vượt quá 90 ngày')
+        
+        # Check if response deadline is in the past
+        if response_deadline:
+            if response_deadline < timezone.now():
+                raise ValidationError('Hạn chót trả lời không được ở quá khứ')
         
         if work_start and work_end:
             if work_end <= work_start:
