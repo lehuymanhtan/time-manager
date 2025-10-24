@@ -18,7 +18,7 @@ class MeetingRequestForm(forms.ModelForm):
             'date_range_start', 'date_range_end',
             'work_hours_start', 'work_hours_end',
             'step_size_minutes', 'work_days_only',
-            'hide_participant_names', 'response_deadline',
+            'response_deadline',
             'created_by_email'
         ]
         widgets = {
@@ -56,7 +56,6 @@ class MeetingRequestForm(forms.ModelForm):
             }),
             'step_size_minutes': forms.Select(attrs={'class': 'form-select'}),
             'work_days_only': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'hide_participant_names': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'response_deadline': forms.DateTimeInput(attrs={
                 'class': 'form-control',
                 'type': 'datetime-local'

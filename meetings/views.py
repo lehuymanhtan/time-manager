@@ -270,6 +270,30 @@ def lock_slot(request, request_id, slot_id):
     return redirect('view_request', request_id=request_id)
 
 
+def edit_request(request, request_id):
+    """Edit meeting request settings"""
+    meeting_request = get_object_or_404(MeetingRequest, id=request_id)
+    
+    # Verify ownership
+    creator_id = get_or_create_creator_id(request)
+    if meeting_request.creator_id != creator_id:
+        return HttpResponseForbidden('You do not have permission to edit this request')
+    
+    if request.method == 'POST':
+        form = MeetingRequestForm(request.POST, instance=meeting_request)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đã cập nhật cài đặt thành công!')
+            return redirect('view_request', request_id=request_id)
+    else:
+        form = MeetingRequestForm(instance=meeting_request)
+    
+    return render(request, 'meetings/edit_request.html', {
+        'meeting_request': meeting_request,
+        'form': form,
+    })
+
+
 def delete_request(request, request_id):
     """Delete a meeting request"""
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)

@@ -300,7 +300,7 @@
                         <div class="list-group-item">
                             <i class="bi bi-person-check text-success"></i>
                             <strong>{{ participant.name|default:"Ẩn danh" }}</strong>
-                            {% if not meeting_request.hide_participant_names and participant.email %}
+                            {% if participant.email %}
                             <br><small class="text-muted">{{ participant.email }}</small>
                             {% endif %}
                             <br><small class="text-muted">
@@ -349,6 +349,9 @@
             <div class="d-flex gap-2 justify-content-center">
                 <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Về Dashboard
+                </a>
+                <a href="{% url 'edit_request' meeting_request.id %}" class="btn btn-warning">
+                    <i class="bi bi-pencil-square"></i> Chỉnh sửa cài đặt
                 </a>
                 <button class="btn btn-primary copy-link-btn"
                         data-link="{{ request.scheme }}://{{ request.get_host }}{{ meeting_request.get_share_url }}">

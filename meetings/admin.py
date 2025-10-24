@@ -18,7 +18,7 @@ class MeetingRequestAdmin(admin.ModelAdmin):
                       'work_hours_start', 'work_hours_end', 'step_size_minutes']
         }),
         ('Options', {
-            'fields': ['work_days_only', 'hide_participant_names', 'response_deadline']
+            'fields': ['work_days_only', 'response_deadline']
         }),
         ('Metadata', {
             'fields': ['id', 'token', 'created_at', 'updated_at'],
