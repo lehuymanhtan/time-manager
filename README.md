@@ -253,7 +253,3 @@ MIT License
 ## Author
 
 Time Manager Team
-
-## Support
-
-Email: support@timemanager.com

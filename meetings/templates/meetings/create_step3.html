@@ -82,44 +82,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Preview Calendar Grid -->
-                    <h5 class="mb-3">Xem trước lịch</h5>
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> 
-                        Đây là xem trước cấu trúc lịch. Heatmap sẽ hiển thị đầy đủ sau khi thành viên điền lịch bận.
-                    </div>
-
-                    <div class="table-responsive mb-4">
-                        <table class="table table-bordered table-sm">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;">Giờ</th>
-                                    {% for date in heatmap_data.dates|slice:":7" %}
-                                    <th class="text-center" style="min-width: 60px;">
-                                        {{ date|date:"D" }}<br>
-                                        <small>{{ date|date:"d/m" }}</small>
-                                    </th>
-                                    {% endfor %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for time in heatmap_data.time_slots|slice:":10" %}
-                                <tr>
-                                    <td class="text-center">{{ time }}</td>
-                                    {% for date in heatmap_data.dates|slice:":7" %}
-                                    <td class="text-center bg-light">-</td>
-                                    {% endfor %}
-                                </tr>
-                                {% endfor %}
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted">
-                                        <small>... và nhiều hơn nữa</small>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
                     <div class="alert alert-success">
                         <h5><i class="bi bi-lightbulb"></i> Sẵn sàng tạo yêu cầu?</h5>
                         <p class="mb-0">

@@ -58,22 +58,35 @@ body {
 .heatmap-table {
     min-width: 100%;
     border-collapse: separate;
-    border-spacing: 2px;
+    border-spacing: 0;
 }
 
 .heatmap-table th {
-    background: var(--light-color);
+    background: #e9ecef;
     padding: 8px;
     text-align: center;
     font-size: 0.9rem;
     position: sticky;
     top: 0;
     z-index: 10;
+    border: 1px solid #dee2e6;
 }
 
 .heatmap-table td {
-    padding: 0;
+    padding: 8px;
     text-align: center;
+    border: 1px solid #dee2e6;
+    min-width: 60px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.heatmap-table tbody td:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 1;
+    position: relative;
 }
 
 .heatmap-cell {
@@ -123,6 +136,98 @@ body {
 .heatmap-level-5 {
     background: #4caf50;
     color: white;
+}
+
+/* Emerald scale for heatmap (Tailwind-like) */
+/* Using !important to override Bootstrap table cell backgrounds */
+.heatmap-table td.bg-emerald-100,
+td.bg-emerald-100 {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+}
+
+.heatmap-table td.bg-emerald-200,
+td.bg-emerald-200 {
+    background-color: #a7f3d0 !important;
+    color: #065f46 !important;
+}
+
+.heatmap-table td.bg-emerald-300,
+td.bg-emerald-300 {
+    background-color: #6ee7b7 !important;
+    color: #065f46 !important;
+}
+
+.heatmap-table td.bg-emerald-400,
+td.bg-emerald-400 {
+    background-color: #34d399 !important;
+    color: #064e3b !important;
+}
+
+.heatmap-table td.bg-emerald-500,
+td.bg-emerald-500 {
+    background-color: #10b981 !important;
+    color: white !important;
+}
+
+/* Heatmap legend boxes */
+.heatmap-legend {
+    width: 30px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}
+
+.heatmap-legend.bg-emerald-100 {
+    background-color: #d1fae5 !important;
+}
+
+.heatmap-legend.bg-emerald-200 {
+    background-color: #a7f3d0 !important;
+}
+
+.heatmap-legend.bg-emerald-300 {
+    background-color: #6ee7b7 !important;
+}
+
+.heatmap-legend.bg-emerald-400 {
+    background-color: #34d399 !important;
+}
+
+.heatmap-legend.bg-emerald-500 {
+    background-color: #10b981 !important;
+}
+
+/* Sticky column for heatmap */
+.sticky-col {
+    position: sticky;
+    left: 0;
+    background-color: #f8f9fa;
+    z-index: 5;
+    font-weight: 600;
+}
+
+/* Collapsible header button */
+.card-header .btn-link {
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.card-header .btn-link:hover {
+    opacity: 0.9;
+}
+
+.card-header .btn-link:focus {
+    box-shadow: none;
+}
+
+.card-header .btn-link .bi-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.card-header .btn-link:not(.collapsed) .bi-chevron-down {
+    transform: rotate(180deg);
 }
 
 /* Calendar Grid for Busy Time Selection */
