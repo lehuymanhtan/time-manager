@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from datetime import datetime, timedelta
 import json
+import uuid
 
 from .models import MeetingRequest, Participant, BusySlot, SuggestedSlot
 from .forms import (
@@ -20,6 +21,15 @@ from .utils import (
     generate_suggested_slots, get_top_suggestions, get_heatmap_data,
     parse_busy_slots_from_json
 )
+
+
+def get_or_create_creator_id(request):
+    """Get or create a unique creator ID from session"""
+    creator_id = request.session.get('creator_id')
+    if not creator_id:
+        creator_id = str(uuid.uuid4())
+        request.session['creator_id'] = creator_id
+    return creator_id
 
 
 # =============================================================================
@@ -33,9 +43,11 @@ def home(request):
 
 def dashboard(request):
     """Leader dashboard showing all their meeting requests"""
-    # For MVP, show all recent requests
-    # In production, filter by user authentication
-    recent_requests = MeetingRequest.objects.all()[:20]
+    # Get creator ID from session
+    creator_id = get_or_create_creator_id(request)
+    
+    # Filter requests by creator_id
+    recent_requests = MeetingRequest.objects.filter(creator_id=creator_id).order_by('-created_at')[:20]
     
     # Add response counts and share URL to each request for template
     for req in recent_requests:
@@ -59,7 +71,10 @@ def create_request_step1(request):
     if request.method == 'POST':
         form = MeetingRequestForm(request.POST)
         if form.is_valid():
-            meeting_request = form.save()
+            meeting_request = form.save(commit=False)
+            # Set creator_id from session
+            meeting_request.creator_id = get_or_create_creator_id(request)
+            meeting_request.save()
             # Store ID in session for next steps
             request.session['meeting_request_id'] = str(meeting_request.id)
             return redirect('create_request_step2')
@@ -208,11 +223,19 @@ def view_request(request, request_id):
     responded = participants.filter(has_responded=True)
     not_responded = participants.filter(has_responded=False)
     
-    # Generate/update suggestions
-    generate_suggested_slots(meeting_request, force_recalculate=True)
+    # Generate/update suggestions (but not if already locked to preserve the locked slot)
+    if meeting_request.status != 'locked':
+        generate_suggested_slots(meeting_request, force_recalculate=True)
     
     # Get top suggestions
-    top_suggestions = get_top_suggestions(meeting_request, limit=10)
+    # If locked, get the locked slot directly, otherwise get top suggestions
+    if meeting_request.status == 'locked':
+        top_suggestions = SuggestedSlot.objects.filter(
+            meeting_request=meeting_request,
+            is_locked=True
+        )
+    else:
+        top_suggestions = get_top_suggestions(meeting_request, limit=10)
     
     # Get heatmap data
     heatmap_data = get_heatmap_data(meeting_request)

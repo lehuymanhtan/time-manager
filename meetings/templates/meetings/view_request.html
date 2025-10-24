@@ -109,6 +109,32 @@
             {% if top_suggestions %}
             <div class="list-group">
                 {% for suggestion in top_suggestions %}
+                <!-- Only show locked suggestion when status is 'locked', otherwise show all -->
+                {% if meeting_request.status == 'locked' %}
+                    {% if suggestion.is_locked %}
+                    <div class="list-group-item border-success border-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-1">
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    {{ suggestion.start_time|date:"l, d/m/Y H:i" }} - {{ suggestion.end_time|time:"H:i" }}
+                                </h5>
+                                <p class="mb-1">
+                                    <i class="bi bi-people"></i> 
+                                    <strong>{{ suggestion.available_count }}</strong> / {{ suggestion.total_participants }} người rảnh
+                                </p>
+                                <small class="text-muted">Múi giờ: {{ meeting_request.timezone }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge {% if suggestion.availability_percentage >= 80 %}bg-success{% elif suggestion.availability_percentage >= 60 %}bg-primary{% else %}bg-secondary{% endif %} fs-4 mb-2">
+                                    {{ suggestion.availability_percentage }}%
+                                </span>
+                                <span class="badge bg-primary"><i class="bi bi-check-circle"></i> Đã chốt</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% else %}
                 <div class="list-group-item {% if forloop.first %}border-success border-3{% endif %}">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -138,6 +164,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
                 {% endfor %}
             </div>
             {% else %}
