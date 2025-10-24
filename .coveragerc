@@ -1,0 +1,66 @@
+[run]
+# Measure branch coverage
+branch = True
+
+# Source code to measure
+source = 
+    meetings
+    time_mamager
+
+# Omit certain files from coverage
+omit =
+    */migrations/*
+    */tests/*
+    */__pycache__/*
+    */venv/*
+    */virtualenv/*
+    */.venv/*
+    */settings.py
+    */wsgi.py
+    */asgi.py
+    */manage.py
+    */admin.py
+    */apps.py
+
+[report]
+# Regexes for lines to exclude from consideration
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+
+    # Don't complain about missing debug-only code:
+    def __repr__
+    def __str__
+
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+
+    # Don't complain if non-runnable code isn't run:
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    if settings.DEBUG
+
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+
+# Ignore coverage under certain conditions
+ignore_errors = True
+
+# Minimum coverage threshold
+# Note: Set to 0 during initial development, increase as tests are written
+fail_under = 0
+
+# Show missing lines
+show_missing = True
+
+# Precision for coverage percentages
+precision = 2
+
+[html]
+# Directory for HTML coverage report
+directory = htmlcov
+
+[xml]
+# File for XML coverage report
+output = coverage.xml
