@@ -496,12 +496,6 @@ def response_complete(request, request_id):
     if participant_id:
         participant = Participant.objects.filter(id=participant_id).first()
     
-    # Get updated heatmap
-    heatmap_data = get_heatmap_data(
-        meeting_request, 
-        participant.timezone if participant else meeting_request.timezone
-    )
-    
     # Get top suggestions
     top_suggestions = get_top_suggestions(meeting_request, limit=5)
     
@@ -512,7 +506,6 @@ def response_complete(request, request_id):
     return render(request, 'meetings/response_complete.html', {
         'meeting_request': meeting_request,
         'participant': participant,
-        'heatmap_data': heatmap_data,
         'top_suggestions': top_suggestions,
         'responded_count': responded_count,
         'total_count': total_count,
