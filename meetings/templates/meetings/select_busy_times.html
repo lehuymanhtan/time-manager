@@ -16,12 +16,10 @@
                     <div class="alert alert-info">
                         <h5>{{ meeting_request.title }}</h5>
                         <p class="mb-0">Thời lượng họp: <strong>{{ meeting_request.duration_minutes }} phút</strong></p>
-                        <p class="mb-0">Phạm vi: {{ meeting_request.date_range_start|date:"d/m/Y" }} đến {{
-                            meeting_request.date_range_end|date:"d/m/Y" }}</p>
-                        <p class="mb-0">Múi giờ của bạn: <strong id="participant-timezone">{{ participant.timezone
-                                }}</strong></p>
-                        <p class="mb-0"><small class="text-muted">Tên: {{ participant.name }} | Email: {{
-                                participant.email|default:"(không có)" }}</small></p>
+                        <p class="mb-0">Phạm vi: {{ meeting_request.date_range_start }} đến {{ meeting_request.date_range_end }}</p>
+                        <p class="mb-0">Múi giờ của bạn: <strong id="participant-timezone">{{ participant.timezone }}</strong></p>
+
+                        
                     </div>
 
                     <div class="mb-3">
