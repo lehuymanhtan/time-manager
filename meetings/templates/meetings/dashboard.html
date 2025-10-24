@@ -58,25 +58,23 @@
                                     </td>
                                     <td>
                                         {% if request.is_active %}
-                                            <span class="badge bg-success">Đang hoạt động</span>
+                                        <span class="badge bg-success">Đang hoạt động</span>
                                         {% elif request.status == 'locked' %}
-                                            <span class="badge bg-primary">Đã chốt</span>
+                                        <span class="badge bg-primary">Đã chốt</span>
                                         {% elif request.status == 'cancelled' %}
-                                            <span class="badge bg-danger">Đã hủy</span>
+                                        <span class="badge bg-danger">Đã hủy</span>
                                         {% elif request.status == 'draft' %}
-                                            <span class="badge bg-secondary">Nháp</span>
+                                        <span class="badge bg-secondary">Nháp</span>
                                         {% else %}
-                                            <span class="badge bg-warning">Đã đóng</span>
+                                        <span class="badge bg-warning">Đã đóng</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         <div class="progress" style="height: 25px;">
-                                            <div class="progress-bar {% if request.response_rate_int >= 80 %}bg-success{% elif request.response_rate_int >= 50 %}bg-primary{% else %}bg-warning{% endif %}" 
-                                                 role="progressbar" 
-                                                 style="width: {{ request.response_rate_int }}%"
-                                                 aria-valuenow="{{ request.response_rate_int }}" 
-                                                 aria-valuemin="0" 
-                                                 aria-valuemax="100">
+                                            <div class="progress-bar {% if request.response_rate_int >= 80 %}bg-success{% elif request.response_rate_int >= 50 %}bg-primary{% else %}bg-warning{% endif %}"
+                                                role="progressbar" style="width: {{ request.response_rate_int }}%"
+                                                aria-valuenow="{{ request.response_rate_int }}" aria-valuemin="0"
+                                                aria-valuemax="100">
                                                 {{ request.response_rate }}%
                                             </div>
                                         </div>
@@ -89,16 +87,18 @@
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'view_request' request.id %}" 
-                                               class="btn btn-outline-primary"
-                                               title="Xem chi tiết">
+                                            <a href="{% url 'view_request' request.id %}"
+                                                class="btn btn-outline-primary" title="Xem chi tiết">
                                                 <i class="bi bi-eye"></i>
                                             </a>
-                                            <button type="button" 
-                                                    class="btn btn-outline-secondary copy-link-btn"
-                                                    data-link="{{ request.share_link }}"
-                                                    title="Sao chép link">
+                                            <button type="button" class="btn btn-outline-secondary copy-link-btn"
+                                                data-link="{{ request.share_link }}" title="Sao chép link">
                                                 <i class="bi bi-link-45deg"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger delete-btn"
+                                                data-request-id="{{ request.id }}"
+                                                data-request-title="{{ request.title }}" title="Xóa">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -128,4 +128,57 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa yêu cầu này không?</p>
+                <p><strong id="deleteRequestTitle"></strong></p>
+                <p class="text-danger">
+                    <i class="bi bi-exclamation-circle"></i>
+                    <strong>Cảnh báo:</strong> Tất cả dữ liệu liên quan (người tham gia, lịch bận, gợi ý) sẽ bị xóa vĩnh
+                    viễn!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Xóa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        // Handle delete button click
+        $('.delete-btn').click(function () {
+            const requestId = $(this).data('request-id');
+            const requestTitle = $(this).data('request-title');
+
+            // Update modal content
+            $('#deleteRequestTitle').text(requestTitle);
+            $('#deleteForm').attr('action', `/request/${requestId}/delete/`);
+
+            // Show modal
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            deleteModal.show();
+        });
+    });
+</script>
 {% endblock %}

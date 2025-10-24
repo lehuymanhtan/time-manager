@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.contrib import messages
 from datetime import datetime, timedelta
 import json
+import uuid
 
 from .models import MeetingRequest, Participant, BusySlot, SuggestedSlot
 from .forms import (
@@ -20,6 +21,15 @@ from .utils import (
     generate_suggested_slots, get_top_suggestions, get_heatmap_data,
     parse_busy_slots_from_json
 )
+
+
+def get_or_create_creator_id(request):
+    """Get or create a unique creator ID from session"""
+    creator_id = request.session.get('creator_id')
+    if not creator_id:
+        creator_id = str(uuid.uuid4())
+        request.session['creator_id'] = creator_id
+    return creator_id
 
 
 # =============================================================================
@@ -33,9 +43,11 @@ def home(request):
 
 def dashboard(request):
     """Leader dashboard showing all their meeting requests"""
-    # For MVP, show all recent requests
-    # In production, filter by user authentication
-    recent_requests = MeetingRequest.objects.all()[:20]
+    # Get creator ID from session
+    creator_id = get_or_create_creator_id(request)
+    
+    # Filter requests by creator_id
+    recent_requests = MeetingRequest.objects.filter(creator_id=creator_id).order_by('-created_at')[:20]
     
     # Add response counts and share URL to each request for template
     for req in recent_requests:
@@ -59,7 +71,10 @@ def create_request_step1(request):
     if request.method == 'POST':
         form = MeetingRequestForm(request.POST)
         if form.is_valid():
-            meeting_request = form.save()
+            meeting_request = form.save(commit=False)
+            # Set creator_id from session
+            meeting_request.creator_id = get_or_create_creator_id(request)
+            meeting_request.save()
             # Store ID in session for next steps
             request.session['meeting_request_id'] = str(meeting_request.id)
             return redirect('create_request_step2')
@@ -208,11 +223,19 @@ def view_request(request, request_id):
     responded = participants.filter(has_responded=True)
     not_responded = participants.filter(has_responded=False)
     
-    # Generate/update suggestions
-    generate_suggested_slots(meeting_request, force_recalculate=True)
+    # Generate/update suggestions (but not if already locked to preserve the locked slot)
+    if meeting_request.status != 'locked':
+        generate_suggested_slots(meeting_request, force_recalculate=True)
     
     # Get top suggestions
-    top_suggestions = get_top_suggestions(meeting_request, limit=10)
+    # If locked, get the locked slot directly, otherwise get top suggestions
+    if meeting_request.status == 'locked':
+        top_suggestions = SuggestedSlot.objects.filter(
+            meeting_request=meeting_request,
+            is_locked=True
+        )
+    else:
+        top_suggestions = get_top_suggestions(meeting_request, limit=10)
     
     # Get heatmap data
     heatmap_data = get_heatmap_data(meeting_request)
@@ -232,8 +255,8 @@ def lock_slot(request, request_id, slot_id):
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)
     slot = get_object_or_404(SuggestedSlot, id=slot_id, meeting_request=meeting_request)
     
-    # Unlock all other slots
-    SuggestedSlot.objects.filter(meeting_request=meeting_request).update(is_locked=False)
+    # Delete all other slots (keep only the locked slot)
+    SuggestedSlot.objects.filter(meeting_request=meeting_request).exclude(id=slot_id).delete()
     
     # Lock this slot
     slot.is_locked = True
@@ -245,6 +268,46 @@ def lock_slot(request, request_id, slot_id):
     
     messages.success(request, 'Đã chốt khung giờ họp!')
     return redirect('view_request', request_id=request_id)
+
+
+def edit_request(request, request_id):
+    """Edit meeting request settings"""
+    meeting_request = get_object_or_404(MeetingRequest, id=request_id)
+    
+    # Verify ownership
+    creator_id = get_or_create_creator_id(request)
+    if meeting_request.creator_id != creator_id:
+        return HttpResponseForbidden('You do not have permission to edit this request')
+    
+    if request.method == 'POST':
+        form = MeetingRequestForm(request.POST, instance=meeting_request)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Đã cập nhật cài đặt thành công!')
+            return redirect('view_request', request_id=request_id)
+    else:
+        form = MeetingRequestForm(instance=meeting_request)
+    
+    return render(request, 'meetings/edit_request.html', {
+        'meeting_request': meeting_request,
+        'form': form,
+    })
+
+
+def delete_request(request, request_id):
+    """Delete a meeting request"""
+    meeting_request = get_object_or_404(MeetingRequest, id=request_id)
+    
+    if request.method == 'POST':
+        title = meeting_request.title
+        meeting_request.delete()
+        messages.success(request, f'Đã xóa yêu cầu "{title}" thành công!')
+        return redirect('dashboard')
+    
+    # If GET request, show confirmation page
+    return render(request, 'meetings/confirm_delete.html', {
+        'meeting_request': meeting_request
+    })
 
 
 # =============================================================================
@@ -268,8 +331,8 @@ def respond_to_request(request, request_id):
             'meeting_request': meeting_request
         })
     
-    # Get or create participant from session
-    participant_id = request.session.get(f'participant_{request_id}')
+    # Get or create participant from URL parameter first, then from session
+    participant_id = request.GET.get('p') or request.session.get(f'participant_{request_id}')
     if participant_id:
         participant = Participant.objects.filter(id=participant_id).first()
     else:
@@ -304,11 +367,15 @@ def respond_to_request(request, request_id):
                     # NULL emails don't violate unique constraint (multiple NULLs are allowed)
                     participant = Participant.objects.create(
                         meeting_request=meeting_request,
-                        name=name or 'Anonymous',
+                        name=name or 'Ẩn danh',
                         email=None,
                         timezone=timezone_val
                     )
                 
+                # Use unique session key including participant ID to avoid conflicts
+                session_key = f'participant_{request_id}_{participant.id}'
+                request.session[session_key] = str(participant.id)
+                # Also store the latest participant ID for this request
                 request.session[f'participant_{request_id}'] = str(participant.id)
             else:
                 # Update participant info
@@ -317,8 +384,8 @@ def respond_to_request(request, request_id):
                 participant.timezone = form.cleaned_data['timezone']
                 participant.save()
             
-            # Redirect to calendar selection
-            return redirect('select_busy_times', request_id=request_id)
+            # Redirect to calendar selection with token and participant ID
+            return redirect(f'/r/{request_id}/select/?t={token}&p={participant.id}')
     else:
         initial = {}
         if participant:
@@ -338,26 +405,36 @@ def respond_to_request(request, request_id):
 
 def select_busy_times(request, request_id):
     """Member selects their busy time slots"""
+    import json
     meeting_request = get_object_or_404(MeetingRequest, id=request_id)
     
-    # Get participant from session
-    participant_id = request.session.get(f'participant_{request_id}')
+    # Get participant ID from URL parameter first (more reliable), then from session
+    participant_id = request.GET.get('p') or request.session.get(f'participant_{request_id}')
     if not participant_id:
-        return redirect('respond_to_request', request_id=request_id)
+        # Redirect back to respond page with token
+        token = request.GET.get('t', meeting_request.token)
+        return redirect(f'/r/{request_id}/?t={token}')
     
     participant = get_object_or_404(Participant, id=participant_id)
     
-    # Get existing busy slots
+    # Store in session for future use
+    request.session[f'participant_{request_id}'] = str(participant.id)
+    
+    # Get existing busy slots for THIS participant only
     busy_slots = participant.busy_slots.all()
     
     # Get heatmap data in participant's timezone
     heatmap_data = get_heatmap_data(meeting_request, participant.timezone)
+    
+    # Serialize heatmap for JavaScript
+    heatmap_data['heatmap_json'] = json.dumps(heatmap_data['heatmap'])
     
     return render(request, 'meetings/select_busy_times.html', {
         'meeting_request': meeting_request,
         'participant': participant,
         'busy_slots': busy_slots,
         'heatmap_data': heatmap_data,
+        'token': request.GET.get('t', meeting_request.token),
     })
 
 
@@ -405,12 +482,8 @@ def save_busy_slots(request, request_id):
         })
     
     except Exception as e:
-        # Log the error for debugging but don't expose details to user
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error saving busy times: {str(e)}")
         return JsonResponse({
-            'error': 'Đã xảy ra lỗi khi lưu dữ liệu. Vui lòng thử lại.'
+            'error': str(e)
         }, status=400)
 
 
@@ -423,12 +496,6 @@ def response_complete(request, request_id):
     if participant_id:
         participant = Participant.objects.filter(id=participant_id).first()
     
-    # Get updated heatmap
-    heatmap_data = get_heatmap_data(
-        meeting_request, 
-        participant.timezone if participant else meeting_request.timezone
-    )
-    
     # Get top suggestions
     top_suggestions = get_top_suggestions(meeting_request, limit=5)
     
@@ -439,7 +506,6 @@ def response_complete(request, request_id):
     return render(request, 'meetings/response_complete.html', {
         'meeting_request': meeting_request,
         'participant': participant,
-        'heatmap_data': heatmap_data,
         'top_suggestions': top_suggestions,
         'responded_count': responded_count,
         'total_count': total_count,

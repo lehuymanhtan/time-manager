@@ -90,6 +90,8 @@ class MeetingRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     created_by_email = models.EmailField(blank=True, verbose_name='Email người tạo')
+    creator_id = models.CharField(max_length=100, blank=True, verbose_name='ID người tạo', 
+                                    help_text='Session/cookie-based identifier for the creator')
     
     class Meta:
         db_table = 'meeting_requests'
@@ -123,7 +125,7 @@ class MeetingRequest(models.Model):
         if total == 0:
             return 0
         responded = self.participants.filter(has_responded=True).count()
-        return round((responded / total) * 100, 1)
+        return round((responded / total) * 100)
     
     def get_share_url(self):
         """Generate shareable URL for participants"""
