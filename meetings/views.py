@@ -343,7 +343,7 @@ def respond_to_request(request, request_id):
                     # NULL emails don't violate unique constraint (multiple NULLs are allowed)
                     participant = Participant.objects.create(
                         meeting_request=meeting_request,
-                        name=name or 'Anonymous',
+                        name=name or 'Ẩn danh',
                         email=None,
                         timezone=timezone_val
                     )
