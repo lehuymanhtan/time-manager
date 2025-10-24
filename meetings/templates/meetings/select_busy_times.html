@@ -33,22 +33,6 @@
                         </ol>
                     </div>
 
-                    <!-- Heatmap Legend -->
-                    <div class="mb-3">
-                        <h6><i class="bi bi-palette"></i> Chú thích màu sắc (Heatmap):</h6>
-                        <div class="d-flex flex-wrap gap-2 align-items-center">
-                            <span class="badge" style="background: #f8f9fa; color: #333; border: 1px solid #dee2e6;">0%
-                                rảnh</span>
-                            <span class="badge" style="background: #e3f2fd; color: #333;">1-19%</span>
-                            <span class="badge" style="background: #bbdefb; color: #333;">20-39%</span>
-                            <span class="badge" style="background: #90caf9; color: #333;">40-59%</span>
-                            <span class="badge" style="background: #42a5f5; color: white;">60-79%</span>
-                            <span class="badge" style="background: #1976d2; color: white;">80-100%</span>
-                            <span class="badge bg-danger">Bạn bận</span>
-                        </div>
-                        <small class="text-muted">* Ô càng xanh đậm = càng nhiều người rảnh</small>
-                    </div>
-
                     <!-- Calendar Grid -->
                     <div id="calendar-grid" class="calendar-container mb-4">
                         <div class="table-responsive">
@@ -151,47 +135,6 @@
     .time-cell.selecting {
         background: #ffc107;
     }
-
-    /* Heatmap colors - càng xanh đậm = càng nhiều người rảnh */
-    .time-cell.heat-0 {
-        background: #f8f9fa;
-        /* Xám nhạt - 0% rảnh */
-    }
-
-    .time-cell.heat-1 {
-        background: #e3f2fd;
-        /* Xanh rất nhạt - 1-19% */
-    }
-
-    .time-cell.heat-2 {
-        background: #bbdefb;
-        /* Xanh nhạt - 20-39% */
-    }
-
-    .time-cell.heat-3 {
-        background: #90caf9;
-        /* Xanh vừa - 40-59% */
-    }
-
-    .time-cell.heat-4 {
-        background: #42a5f5;
-        /* Xanh đậm - 60-79% */
-        color: white;
-    }
-
-    .time-cell.heat-5 {
-        background: #1976d2;
-        /* Xanh rất đậm - 80%+ */
-        color: white;
-        font-weight: bold;
-    }
-
-    /* Busy cells override heatmap */
-    .time-cell.busy {
-        background: #dc3545 !important;
-        border-color: #b02a37 !important;
-        color: white !important;
-    }
 </style>
 
 {% endblock %}
@@ -209,30 +152,6 @@
     let selectionMode = null; // 'add' or 'remove'
     let isDragging = false; // Flag to prevent click after drag
 
-    // Heatmap data from server
-    const heatmapData = JSON.parse('{{ heatmap_data.heatmap_json|escapejs }}');
-    console.log('Heatmap data:', heatmapData);
-
-    // Initialize heatmap colors
-    function initHeatmap() {
-        $('.time-cell').each(function () {
-            const $cell = $(this);
-            const date = $cell.data('date');
-            const time = $cell.data('time');
-
-            if (heatmapData[date] && heatmapData[date][time]) {
-                const cellData = heatmapData[date][time];
-                const level = cellData.level || 0;
-
-                // Add heatmap class
-                $cell.addClass('heat-' + level);
-
-                // Add tooltip with info
-                const tooltip = `${cellData.available || 0}/${cellData.total || 0} người rảnh (${cellData.percentage || 0}%)`;
-                $cell.attr('title', tooltip);
-            }
-        });
-    }
 
     // Load existing busy slots
     {% if busy_slots %}
@@ -245,14 +164,8 @@
     {% endfor %}
 ];
     {% endif %}
+    markBusySlotsOnCalendar();
 
-    // Initialize on page load
-    $(document).ready(function () {
-        initHeatmap();
-        {% if busy_slots %}
-        markBusySlotsOnCalendar();
-        {% endif %}
-    });
 
     // Mouse event handlers for drag selection
     let startCell = null;
