@@ -185,15 +185,6 @@ test/test_get_top_suggestions.py::TestGetTopSuggestions::test_empty_meeting_requ
 ============================== 69 passed in 2.34s ===============================
 ```
 
-## Contributing
-
-When adding new tests:
-1. Follow the existing naming convention
-2. Add appropriate docstrings
-3. Use fixtures from `conftest.py`
-4. Ensure timezone-aware datetime usage
-5. Update this README if adding new test files
-
 ## Related Documentation
 
 - **Test Design**: `/test/test_design.md` - Detailed test case specifications
