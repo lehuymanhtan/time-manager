@@ -1,4 +1,4 @@
-# Time Manager - Meeting Scheduler
+# TimeWeave - Meeting Scheduler
 
 Ứng dụng giúp Leader tạo yêu cầu tìm thời điểm rảnh cho cuộc họp. Thành viên nhận link, nhập khoảng bận của mình. Hệ thống hợp nhất các khoảng bận, tính ra các khung rảnh phù hợp và hiển thị lịch heatmap.
 
@@ -252,4 +252,4 @@ MIT License
 
 ## Author
 
-Time Manager Team
+TimeWeave Team

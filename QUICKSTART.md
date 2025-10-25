@@ -1,4 +1,4 @@
-# Quick Start Guide - Time Manager
+# Quick Start Guide - TIMEWEAVE
 
 ## Cài đặt nhanh (Windows)
 

@@ -1,4 +1,4 @@
-// Main JavaScript for Time Manager
+// Main JavaScript for TimeWeave
 
 // Utility Functions
 function getCookie(name) {
@@ -263,5 +263,5 @@ function exportToICS(requestId, slotId) {
 }
 
 // Console welcome message
-console.log('%cTime Manager', 'font-size: 20px; font-weight: bold; color: #0d6efd;');
+console.log('%cTimeWeave', 'font-size: 20px; font-weight: bold; color: #0d6efd;');
 console.log('Meeting scheduling made easy!');
