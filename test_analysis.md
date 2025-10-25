@@ -19,18 +19,14 @@
 - `False` if participant has one or more overlapping busy slots
 
 **Edge Cases to Test:**
-1. No busy slots for participant (should return True)
-2. Busy slot exactly matching the time range
-3. Busy slot partially overlapping (start before checking slot, end during)
-4. Busy slot partially overlapping (start during checking slot, end after)
-5. Busy slot completely contained within the checking time range
-6. Checking time range completely contained within a busy slot
-7. Multiple overlapping busy slots
-8. Adjacent busy slots (touching but not overlapping)
-9. Busy slot ending exactly when checking slot starts (boundary case - should be available)
-10. Busy slot starting exactly when checking slot ends (boundary case - should be available)
-11. Participant with no busy slots at all
-12. Very long busy slot spanning multiple days
+1. Busy slot exactly matching the time range
+2. Busy slot partially overlapping
+3. Busy slot completely contained within the checking time range
+4. Checking time range completely contained within a busy slot
+5. Multiple overlapping busy slots
+6. Adjacent busy slots (touching but not overlapping)
+7. Busy slot ending exactly when checking slot starts (boundary case - should be available)
+8. Busy slot starting exactly when checking slot ends (boundary case - should be available)
 
 **Dependencies to Mock:**
 - `BusySlot.objects.filter()` - Database query for participant's busy slots
@@ -66,15 +62,10 @@
 
 **Edge Cases to Test:**
 1. No participants have responded (should return `(0, 0, [])`)
-2. All participants available (should return `(total, total, [all_ids])`)
-3. No participants available (should return `(0, total, [])`)
-4. Some participants available, some not (partial availability)
-5. Mix of participants with and without busy slots
-6. Participants with multiple overlapping busy slots
-7. Meeting request with no participants at all
-8. Meeting request with participants but none have responded
-9. Single participant scenarios
-10. Large number of participants (performance consideration)
+2. Some participants available, some not (partial availability)
+3. Mix of participants with and without busy slots
+4. Participants with multiple overlapping busy slots
+5. Meeting request with no participants at all
 
 **Dependencies to Mock:**
 - `Participant.objects.filter()` - Database query for responded participants
@@ -106,16 +97,11 @@
 - Each slot contains availability counts and metadata
 
 **Edge Cases to Test:**
-1. First time generation (no existing slots in database)
-2. Regeneration without `force_recalculate` (should update existing slots)
-3. Regeneration with `force_recalculate=True` (should delete and recreate all)
-4. Meeting request with no participants
-5. Meeting request with no responded participants (all slots should have 0 available)
-6. Large number of possible slots (performance testing)
-7. All participants busy for all slots (all availability_count = 0)
-8. All participants available for all slots (all availability_count = total)
-9. Meeting request with invalid or incomplete configuration
-10. Partial responses (some participants responded, some haven't)
+1. Regeneration without `force_recalculate` (should update existing slots)
+2. Regeneration with `force_recalculate=True` (should delete and recreate all)
+3. Meeting request with no participants
+4. Meeting request with no responded participants (all slots should have 0 available)
+5. Partial responses (some participants responded, some haven't)
 
 **Dependencies to Mock:**
 - `SuggestedSlot.objects.filter().delete()` - Database deletion
@@ -153,17 +139,12 @@
 - Empty list if no suggestions meet criteria
 
 **Edge Cases to Test:**
-1. No suggestions available in database (should return empty list)
-2. Fewer suggestions than limit (should return all that qualify)
-3. More suggestions than limit (should truncate to limit)
-4. All suggestions below `min_availability_pct` threshold (should return empty list)
-5. Some suggestions above, some below threshold (should filter correctly)
-6. `min_availability_pct = 0` (should return all suggestions, limited by count)
-7. `min_availability_pct = 100` (should return only perfect matches)
-8. Tie in available_count (should sort by start_time as secondary sort)
-9. `limit = 1` (edge case for single result)
-10. `limit = 0` or negative (boundary testing)
-11. Very large limit (e.g., 10000)
+1. All suggestions below `min_availability_pct` threshold (should return empty list)
+2. Some suggestions above, some below threshold (should filter correctly)
+3. `min_availability_pct = 0` (should return all suggestions, limited by count)
+4. `min_availability_pct = 100` (should return only perfect matches)
+5. `limit = 1` (edge case for single result)
+6. `limit = 0` or negative (boundary testing)
 
 **Dependencies to Mock:**
 - `SuggestedSlot.objects.filter()` - Database query
