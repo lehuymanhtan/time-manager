@@ -135,10 +135,6 @@ Comprehensive unit test cases for the meeting time scheduler's core feature: cal
 - `generate_suggested_slots()` - Core heatmap algorithm
 - `generate_time_slots()` - Helper function for slot creation
 
-### Phase 3 - Filtering & Display (Lower Priority)
-- `get_top_suggestions()` - Sorting and filtering for UI
-- `get_heatmap_data()` - Data formatting for visualization
-
 ---
 
 ## Traceability Matrix
