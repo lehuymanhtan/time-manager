@@ -273,36 +273,6 @@ def get_heatmap_data(meeting_request, participant_timezone='Asia/Ho_Chi_Minh'):
     }
 
 
-def merge_overlapping_busy_slots(busy_slots):
-    """
-    Merge overlapping busy slots to optimize availability calculation
-    Takes a list of BusySlot objects, returns merged list of (start, end) tuples
-    """
-    if not busy_slots:
-        return []
-    
-    # Sort by start time
-    sorted_slots = sorted(busy_slots, key=lambda x: x.start_time)
-    
-    merged = []
-    current_start = sorted_slots[0].start_time
-    current_end = sorted_slots[0].end_time
-    
-    for slot in sorted_slots[1:]:
-        if slot.start_time <= current_end:
-            # Overlapping or adjacent, merge
-            current_end = max(current_end, slot.end_time)
-        else:
-            # No overlap, save current and start new
-            merged.append((current_start, current_end))
-            current_start = slot.start_time
-            current_end = slot.end_time
-    
-    # Don't forget the last one
-    merged.append((current_start, current_end))
-    
-    return merged
-
 
 def format_datetime_for_timezone(dt, timezone_str):
     """
